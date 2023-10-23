@@ -56,22 +56,26 @@
       };
     in
       nixpkgs.lib.nixosSystem ((mkConfig args) // overrides (mkConfig args));
-  in {
-    nixosConfigurations.nova = (mkSystem {
-      hostname = "nova";
-      users = {vaskel = ./home;};
-      flags = {
-        headless = true;
+  in
+    {
+      nixosConfigurations.nova = (mkSystem {
+        hostname = "nova";
+        users = {vaskel = ./home;};
+        flags = {
+          headless = true;
+        };
+      }) (_: {});
+    }
+    // flake-utils.lib.eachDefaultSystem (system: let
+      pkgs = nixpkgs.legacyPackages.${system};
+    in {
+      formatter = pkgs.alejandra;
+
+      devShells.default = pkgs.mkShell {
+        packages = with pkgs; [
+          alejandra # formatter
+          nil # LSP
+        ];
       };
-    }) (_: {});
-
-    formatter.x86_64-linux = nixpkgs.legacyPackages.x86_64-linux.alejandra;
-
-    devShells.x86_64-linux.default = nixpkgs.legacyPackages.x86_64-linux.mkShell {
-      packages = with nixpkgs.legacyPackages.x86_64-linux; [
-        alejandra # formatter
-        nil # LSP
-      ];
-    };
-  };
+    });
 }
